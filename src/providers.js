@@ -137,6 +137,32 @@ const list = [
       return { balance, account: d.label || null };
     },
   },
+  {
+    id: "deepseek",
+    name: "DeepSeek",
+    mark: "DS",
+    keyUrl: "https://platform.deepseek.com/api_keys",
+    env: ["DEEPSEEK_API_KEY"],
+    loose: /^sk-[a-f0-9]{32}$/,
+    regions: ["https://api.deepseek.com"],
+    request: (key, base) => ({ url: `${base}/user/balance`, headers: bearer(key) }),
+    parse: (body) => {
+      const info = (body?.balance_infos || [])[0];
+      if (info) return { balance: money(info.total_balance, info.currency) };
+      if (body?.is_available != null) return { balance: body.is_available ? "Balance available" : "No balance" };
+      return {};
+    },
+  },
+  {
+    id: "xai",
+    name: "xAI Grok",
+    mark: "xA",
+    keyUrl: "https://console.x.ai",
+    env: ["XAI_API_KEY", "GROK_API_KEY"],
+    pattern: /^xai-\w{20,}$/,
+    regions: ["https://api.x.ai/v1"],
+    ...openAICompatible(),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
