@@ -109,6 +109,34 @@ const list = [
     regions: ["https://api.groq.com/openai/v1"],
     ...openAICompatible(),
   },
+  {
+    id: "mistral",
+    name: "Mistral",
+    mark: "Mi",
+    keyUrl: "https://console.mistral.ai/api-keys",
+    env: ["MISTRAL_API_KEY"],
+    regions: ["https://api.mistral.ai/v1"],
+    ...openAICompatible(),
+  },
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    mark: "OR",
+    keyUrl: "https://openrouter.ai/keys",
+    env: ["OPENROUTER_API_KEY"],
+    pattern: /^sk-or-[\w-]{20,}$/,
+    regions: ["https://openrouter.ai/api/v1"],
+    // /key reports usage + credit limit; /models is public so it can't validate.
+    request: (key, base) => ({ url: `${base}/key`, headers: bearer(key) }),
+    parse: (body) => {
+      const d = body?.data || {};
+      let balance = null;
+      if (d.limit_remaining != null) balance = `${money(d.limit_remaining)} / ${money(d.limit)}`;
+      else if (d.usage != null) balance = `${money(d.usage)} used · no limit`;
+      if (balance && d.is_free_tier) balance += " · free tier";
+      return { balance, account: d.label || null };
+    },
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
