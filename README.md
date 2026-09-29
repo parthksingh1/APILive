@@ -124,3 +124,26 @@ apilive checks the npm registry for a newer version at most once a day and tells
 
 The check sends one anonymous request to `registry.npmjs.org`, with no keys and no usage data. Turn it off with `--no-update-check`, `NO_UPDATE_NOTIFIER=1` or `DO_NOT_TRACK=1`. It's skipped in CI. Release notes are in the [Changelog](CHANGELOG.md). Releases are published from GitHub Actions with [npm provenance](https://docs.npmjs.com/generating-provenance-statements/), so you can verify with `npm audit signatures` that the package was built from this repository.
 
+## How it stays free
+
+Each provider is checked with an endpoint that **authenticates the key but runs no model**:
+
+| Endpoint type | Providers |
+|---|---|
+| `GET /models` | OpenAI, Anthropic, Gemini, Groq, Mistral, xAI, Together, Cohere, Kimi, Qwen, GLM, SiliconFlow, Perplexity, Cerebras, Fireworks, DeepInfra, Hyperbolic, Nebius |
+| Account / balance | OpenRouter `/key`, DeepSeek `/user/balance`, Novita `/billing/balance`, Hugging Face `/whoami-v2`, Replicate `/account` |
+| Validation-error probe | SambaNova: an embeddings request with no input, rejected before anything runs |
+
+Some providers (Novita, SambaNova, Nvidia, OpenRouter) serve their model list **without authentication**. A naive checker would report *any* string as a working key for them. apilive avoids those endpoints, and `npm run verify` sends a fake key to every provider to prove each one rejects it:
+
+```text
+$ npm run verify
+ok    openai       invalid   401  Incorrect API key provided
+ok    anthropic    invalid   401  API key is invalid.
+ok    gemini       invalid   400  API key not valid.
+…
+No provider accepted a fake key.
+```
+
+> "Live" means the provider authenticated the key. Providers such as OpenAI don't expose credit balance through the API, so a live key can still hit a quota limit on its first real request.
+
