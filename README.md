@@ -41,3 +41,75 @@ Online key checkers want you to paste secrets into someone else's website. **api
 - **CI-ready CLI** with exit codes and `--json`.
 - **Exports** a Markdown or JSON report with keys masked.
 
+## Usage
+
+### Web UI
+
+```bash
+npx apilive
+```
+
+This opens `http://127.0.0.1:4577`. Any keys found in the current directory's `.env*` files or in your environment are listed but **not sent anywhere until you click Check**. You can also paste one key or an entire `.env` file.
+
+### Terminal
+
+```bash
+npx apilive check                      # scan ./.env* + environment
+npx apilive check .env.production      # specific files
+npx apilive check --no-env             # only .env files, ignore shell env
+pbpaste | npx apilive check --stdin    # from clipboard, stays out of shell history
+npx apilive check --json               # machine-readable
+npx apilive providers                  # list providers + env var names
+```
+
+```text
+  apilive v1.1.0  ·  checking 4 keys  · free endpoints only, no credits spent
+
+  ✓ OpenAI      sk-proj…7Hq2   live · 412ms · 87 models · 4999 req remaining
+                OPENAI_API_KEY · .env
+  ✓ OpenRouter  sk-or-v…2c81   live · 390ms · $13.42 / $20.00
+                OPENROUTER_API_KEY · .env
+  ~ Groq        gsk_DE…Wm4T    rate-limited · 305ms
+                GROQ_API_KEY · .env.local
+  ✗ Mistral     DEMOde…91Lz    invalid · 604ms · Unauthorized
+                MISTRAL_API_KEY · .env
+
+  2 live  ·  1 rate-limited  ·  1 invalid  ·  1.1s  ·  0 tokens spent
+```
+
+**Exit codes:** `0` all keys live (or only rate-limited) · `1` a key is invalid, out of credit, or unverifiable · `2` no keys found or bad usage.
+
+### In CI
+
+```yaml
+# .github/workflows/keys.yml — nightly check that production keys still work
+on:
+  schedule: [{ cron: "0 6 * * *" }]
+jobs:
+  keys:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npx -y apilive@1 check   # pin the major version in CI
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+```
+
+### Options
+
+| Flag | Description |
+|---|---|
+| `--port <n>` | UI port (default `4577`, falls back to the next free port) |
+| `--no-open` | Don't open the browser |
+| `--no-env` | Ignore environment variables; only read `.env` files |
+| `--stdin` | Read keys or `.env` text from stdin |
+| `-p, --provider <id>` | Treat keys from stdin as this provider |
+| `--json` | JSON output for `check` |
+| `--models` | Print each key's model list |
+| `--timeout <sec>` | Per-request timeout (default `15`) |
+| `--concurrency <n>` | Parallel checks (default `6`) |
+| `--demo` | UI with sample keys and simulated responses, for screenshots |
+| `--no-update-check` | Don't check npm for a newer version |
+
+Other commands: `apilive update` (update in place), `apilive privacy`, `apilive terms`. The [Guide](docs/GUIDE.md) has the full reference, troubleshooting and FAQ.
+
