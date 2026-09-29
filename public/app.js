@@ -841,3 +841,56 @@ function renderSheet() {
   );
 }
 
+// ------------------------------------------------------------------ export
+
+function report() {
+  return state.entries.map((e) => ({
+    provider: pName(e.provider),
+    key: e.masked,
+    source: e.sources?.join(", ") || "pasted",
+    status: statusOf(e),
+    latencyMs: e.result?.latencyMs ?? null,
+    models: e.result?.modelCount ?? null,
+    credit: e.result?.balance ?? null,
+    message: e.result && e.result.status !== "live" ? (e.result.message ?? null) : null,
+    checkedAt: e.checkedAt?.toISOString() ?? null,
+  }));
+}
+
+function exportMarkdown() {
+  const lines = report().map((r) => `| ${r.provider} | \`${r.key}\` | ${STATUS[r.status]} | ${r.latencyMs != null ? r.latencyMs + " ms" : "—"} | ${r.models ?? "—"} | ${r.credit ?? "—"} |`);
+  copy(
+    [
+      `**apilive report**, ${new Date().toLocaleString()}`,
+      "",
+      "| Provider | Key | Status | Latency | Models | Credit |",
+      "|---|---|---|---:|---:|---|",
+      ...lines,
+    ].join("\n"),
+    "Markdown report copied",
+  );
+}
+
+function download(kind) {
+  const rows = report();
+  let blob;
+  if (kind === "csv") {
+    const cols = Object.keys(rows[0] || { provider: "" });
+    const cell = (v) => {
+      const s = v == null ? "" : String(v);
+      // Neutralise spreadsheet formulas (CSV injection).
+      const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+      return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+    };
+    blob = new Blob([[cols.join(","), ...rows.map((r) => cols.map((c) => cell(r[c])).join(","))].join("\n")], { type: "text/csv" });
+  } else {
+    blob = new Blob([JSON.stringify({ generatedAt: new Date().toISOString(), results: rows }, null, 2)], { type: "application/json" });
+  }
+  const a = h("a", { href: URL.createObjectURL(blob), download: `apilive-report.${kind}` });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(`Downloaded apilive-report.${kind}`);
+}
+
