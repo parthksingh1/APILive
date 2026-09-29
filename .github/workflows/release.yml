@@ -1,0 +1,37 @@
+name: Release
+
+# Publishes to npm when a version tag is pushed (git tag v1.2.0 && git push --follow-tags).
+# Uses npm trusted publishing (OIDC): no npm token is stored in the repo, and
+# provenance attestations are generated automatically.
+# One-time setup on npmjs.com → package settings → Trusted Publisher:
+#   GitHub Actions · user: parthksingh1 · repo: apilive · workflow: release.yml
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # create the GitHub release
+  id-token: write # npm trusted publishing
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm install -g npm@latest
+      - name: Check tag matches package.json
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - run: npm test
+      - run: npm publish
+      - name: GitHub release with changelog notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="$VERSION" '$0 ~ "^## \[" v "\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
