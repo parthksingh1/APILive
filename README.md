@@ -163,3 +163,32 @@ apilive handles secrets, so it's built to be easy to audit:
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
+## Add a provider
+
+Providers live in [`src/providers.js`](src/providers.js). Most OpenAI-compatible APIs take six lines:
+
+```js
+{
+  id: "acme",
+  name: "Acme AI",
+  mark: "Ac",
+  keyUrl: "https://acme.ai/keys",
+  env: ["ACME_API_KEY"],
+  pattern: /^acme-\w{20,}$/,           // optional: unique key format
+  regions: ["https://api.acme.ai/v1"],
+  ...openAICompatible(),
+},
+```
+
+Then run `npm run verify` to confirm the endpoint rejects fake keys, and `npm test`.
+
+## Development
+
+```bash
+git clone https://github.com/parthksingh1/apilive && cd apilive
+npm start            # UI (no install step, since there are no dependencies)
+npm run check        # CLI
+npm test             # unit + server security tests
+npm run verify       # live fake-key check against every provider
+```
+
