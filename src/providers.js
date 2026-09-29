@@ -250,6 +250,26 @@ const list = [
     regions: ["https://api.perplexity.ai/v1"],
     ...openAICompatible(),
   },
+  {
+    id: "cerebras",
+    name: "Cerebras",
+    mark: "Ce",
+    keyUrl: "https://cloud.cerebras.ai",
+    env: ["CEREBRAS_API_KEY"],
+    pattern: /^csk-\w{20,}$/,
+    regions: ["https://api.cerebras.ai/v1"],
+    ...openAICompatible(),
+  },
+  {
+    id: "fireworks",
+    name: "Fireworks AI",
+    mark: "Fw",
+    keyUrl: "https://fireworks.ai/account/api-keys",
+    env: ["FIREWORKS_API_KEY"],
+    pattern: /^fw_\w{20,}$/,
+    regions: ["https://api.fireworks.ai/inference/v1"],
+    ...openAICompatible(),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
