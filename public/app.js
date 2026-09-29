@@ -407,3 +407,69 @@ function wireAdd() {
 
 const prepare = (e) => ({ ...e, result: null, checking: false, checkedAt: null });
 
+// ------------------------------------------------------------------ checks
+
+const queue = [];
+let active = 0;
+
+function runChecks(refs) {
+  requireAck(() => {
+    for (const ref of refs) {
+      const e = find(ref);
+      if (!e || !e.provider || e.checking) continue;
+      e.checking = true;
+      queue.push(ref);
+    }
+    render();
+    pump();
+  });
+}
+
+function pump() {
+  while (active < 6 && queue.length) {
+    const ref = queue.shift();
+    active++;
+    checkOne(ref).finally(() => {
+      active--;
+      pump();
+    });
+  }
+}
+
+async function checkOne(ref) {
+  const e = find(ref);
+  if (!e) return;
+  try {
+    e.result = await api("POST", "/api/check", { ref });
+  } catch (err) {
+    e.result = { status: "error", message: /fetch|network/i.test(err.message) ? "Lost connection to apilive. Is it still running?" : err.message };
+  }
+  e.checking = false;
+  e.checkedAt = new Date();
+  state.lastChecked = e.checkedAt;
+  if (!find(ref)) return;
+  render();
+  if (state.sheetRef === ref) renderSheet();
+}
+
+async function removeEntry(ref) {
+  state.entries = state.entries.filter((e) => e.ref !== ref);
+  if (state.sheetRef === ref) closeSheet();
+  render();
+  api("DELETE", `/api/keys/${ref}`).catch(() => {});
+  toast("Key removed from memory");
+}
+
+async function setProvider(ref, provider) {
+  try {
+    const updated = await api("PATCH", `/api/keys/${ref}`, { provider });
+    const e = find(ref);
+    Object.assign(e, updated, { result: null });
+    render();
+    renderSheet();
+    runChecks([ref]);
+  } catch (err) {
+    toast(err.message, { error: true });
+  }
+}
+
