@@ -705,3 +705,139 @@ function openExportMenu(anchor) {
   ]);
 }
 
+// ------------------------------------------------------------------ sheet
+
+let sheetReturnFocus = null;
+
+function openSheet(ref, { focusProvider = false } = {}) {
+  if (!find(ref)) return;
+  closeMenu();
+  if (!state.sheetRef) sheetReturnFocus = document.activeElement;
+  state.sheetRef = ref;
+  $("sheet").hidden = false;
+  $("sheetBackdrop").hidden = false;
+  renderSheet();
+  render();
+  const target = focusProvider ? $("sheet").querySelector("select") : $("sheet").querySelector("[data-sheet-close]");
+  (target || $("sheet").querySelector("[data-sheet-close]"))?.focus();
+}
+
+function closeSheet() {
+  if (!state.sheetRef) return;
+  state.sheetRef = null;
+  $("sheet").hidden = true;
+  $("sheetBackdrop").hidden = true;
+  render();
+  if (sheetReturnFocus?.isConnected) sheetReturnFocus.focus();
+}
+
+function renderSheet() {
+  const e = find(state.sheetRef);
+  if (!e) return closeSheet();
+  const s = statusOf(e);
+  const r = e.result || {};
+  const p = state.byId[e.provider];
+  const sheet = $("sheet");
+
+  const providerField = h(
+    "div",
+    { class: "select" },
+    h(
+      "select",
+      { "aria-label": "Provider for this key", onchange: (ev) => ev.target.value && ev.target.value !== e.provider && setProvider(e.ref, ev.target.value) },
+      !e.provider ? h("option", { value: "" }, "Choose a provider…") : null,
+      e.candidates?.length ? h("optgroup", { label: "Matches this key format" }, e.candidates.map((id) => h("option", { value: id, selected: id === e.provider }, pName(id)))) : null,
+      h(
+        "optgroup",
+        { label: "All providers" },
+        state.providers.filter((x) => !e.candidates?.includes(x.id)).map((x) => h("option", { value: x.id, selected: x.id === e.provider }, x.name)),
+      ),
+    ),
+    icon("chevron", "icon-sm"),
+  );
+
+  const rows = [
+    ["Status", statusEl(s)],
+    ["Provider", e.confident && e.provider ? pName(e.provider) : providerField],
+    ["Key", h("span", { class: "key-text" }, e.masked)],
+    ["Found in", e.sources?.length ? e.sources.join(", ") : "Pasted"],
+    r.latencyMs != null ? ["Latency", `${r.latencyMs} ms`] : null,
+    r.httpStatus ? ["HTTP status", String(r.httpStatus)] : null,
+    r.region ? ["Endpoint", r.region] : null,
+    r.balance ? ["Credit", r.balance] : null,
+    r.account ? ["Account", r.account] : null,
+    r.rateLimit ? ["Rate limit", r.rateLimit] : null,
+    e.checkedAt ? ["Checked", e.checkedAt.toLocaleTimeString()] : null,
+    p ? ["Manage", h("a", { href: p.keyUrl, target: "_blank", rel: "noopener noreferrer" }, "Key dashboard", icon("external", "icon-sm"))] : null,
+  ].filter(Boolean);
+
+  const parts = [];
+  if (!e.confident && e.provider) {
+    parts.push(
+      h(
+        "div",
+        { class: "alert", "data-s": "limited" },
+        icon("info"),
+        h("div", {}, h("strong", {}, "Provider guessed from the key format"), h("p", {}, "Several providers use this format. Confirm the provider below. apilive never tries a key against more than one provider.")),
+      ),
+    );
+  } else if (!e.provider) {
+    parts.push(h("div", { class: "alert", "data-s": "pending" }, icon("info"), h("div", {}, h("strong", {}, "Choose a provider"), h("p", {}, "apilive couldn't tell which provider this key belongs to."))));
+  } else if (EXPLAIN[s] && s !== "pending") {
+    const [title, text] = EXPLAIN[s];
+    parts.push(h("div", { class: "alert", "data-s": s }, icon(s === "error" ? "info" : "alert"), h("div", {}, h("strong", {}, title), h("p", {}, text), r.message ? h("code", {}, r.message) : null)));
+  }
+
+  parts.push(h("section", {}, h("h3", {}, "Details"), h("dl", { class: "props" }, rows.map(([k, v]) => h("div", {}, h("dt", {}, k), h("dd", {}, v))))));
+
+  if (r.models?.length) {
+    const list = h("ul", { class: "model-list" });
+    const fill = (q = "") => {
+      const items = r.models.filter((m) => m.toLowerCase().includes(q.toLowerCase()));
+      list.replaceChildren(
+        ...(items.length
+          ? items.map((m) => h("li", {}, h("button", { type: "button", title: "Copy model ID", onclick: () => copy(m, `Copied ${m}`) }, m, icon("copy", "icon-sm"))))
+          : [h("li", { class: "none" }, "No models match.")]),
+      );
+    };
+    fill();
+    parts.push(
+      h(
+        "section",
+        {},
+        h(
+          "div",
+          { class: "models-tools" },
+          h("h3", {}, `Models (${r.models.length})`),
+          h(
+            "label",
+            { class: "search" },
+            icon("search"),
+            h("input", { type: "search", placeholder: "Filter models", "aria-label": "Filter models", oninput: (ev) => fill(ev.target.value) }),
+          ),
+        ),
+        list,
+      ),
+    );
+  }
+
+  sheet.replaceChildren(
+    h(
+      "div",
+      { class: "sheet-head" },
+      mark(e.provider, "lg"),
+      h("div", { class: "sheet-title" }, h("h2", { id: "sheetTitle" }, e.provider ? pName(e.provider) : "Unknown provider"), h("span", { class: "key-text" }, e.masked)),
+      h("button", { class: "btn-icon", type: "button", "aria-label": "Close details", "data-sheet-close": true, onclick: closeSheet }, icon("x")),
+    ),
+    h("div", { class: "sheet-body" }, parts),
+    h(
+      "div",
+      { class: "sheet-foot" },
+      h("button", { class: "btn btn-danger btn-sm", type: "button", onclick: () => removeEntry(e.ref) }, icon("trash"), "Remove"),
+      h("span", { class: "spacer" }),
+      r.models?.length ? h("button", { class: "btn btn-secondary btn-sm", type: "button", onclick: () => copy(r.models.join("\n"), `Copied ${plural(r.models.length, "model ID")}`) }, icon("copy"), "Copy models") : null,
+      h("button", { class: "btn btn-primary btn-sm", type: "button", disabled: !e.provider || e.checking, onclick: () => runChecks([e.ref]) }, icon("refresh"), e.checking ? "Checking…" : s === "pending" ? "Check" : "Re-check"),
+    ),
+  );
+}
+
