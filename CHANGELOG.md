@@ -20,6 +20,11 @@ All notable changes to apilive are documented here. This project follows [Semant
 - Provider marks are now neutral monograms. apilive no longer uses provider brand colours, and states clearly that it is not affiliated with any provider.
 - At most 100 keys per session, in both the app and the CLI.
 
+### Fixed
+
+- SambaNova could report a fake key as live when requests came from some regions, which returned an empty 404. Validation-probe providers now count a key as live only when the provider returns a genuine validation error.
+- A 2xx response that isn't JSON (for example a captive portal or bot-challenge page) now shows as unverified instead of live.
+
 ### Privacy
 
 - New: the optional update check sends one anonymous request to `registry.npmjs.org`. It contains no keys or usage data. See the [Privacy Policy](PRIVACY.md).
