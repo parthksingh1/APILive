@@ -473,3 +473,164 @@ async function setProvider(ref, provider) {
   }
 }
 
+// ------------------------------------------------------------------ table
+
+function visibleEntries() {
+  const q = state.query.trim().toLowerCase();
+  return state.entries.filter((e) => {
+    const s = statusOf(e);
+    if (state.filter === "live" && s !== "live") return false;
+    if (state.filter === "issues" && !isIssue(s)) return false;
+    if (state.filter === "pending" && s !== "pending") return false;
+    if (!q) return true;
+    return [pName(e.provider), e.masked, ...(e.sources || [])].join(" ").toLowerCase().includes(q);
+  });
+}
+
+function render() {
+  const has = state.entries.length > 0;
+  const rows = visibleEntries();
+  $("tbody").replaceChildren(...rows.map(buildRow));
+  $("table").hidden = !has;
+  $("emptyState").hidden = has;
+  $("noMatch").hidden = !has || rows.length > 0;
+  $("cardFoot").hidden = !has;
+  renderTabs();
+  renderFoot();
+  renderBanner();
+  $("recheckAllBtn").disabled = !state.entries.some((e) => e.provider && !e.checking);
+}
+
+function buildRow(e) {
+  const s = statusOf(e);
+  const r = e.result || {};
+  // A factory, not a node: a DOM node can only be mounted in one cell.
+  const pending = () => (s === "checking" ? h("span", { class: "skeleton" }) : h("span", { class: "muted" }, "—"));
+  const live = s === "live";
+
+  const menuBtn = h(
+    "button",
+    {
+      class: "btn-icon row-menu-btn",
+      type: "button",
+      "aria-label": `Actions for ${pName(e.provider)} key`,
+      "aria-haspopup": "menu",
+      onclick: (ev) => {
+        ev.stopPropagation();
+        openRowMenu(ev.currentTarget, e);
+      },
+    },
+    icon("more"),
+  );
+
+  const tr = h(
+    "tr",
+    {
+      tabindex: "0",
+      class: state.sheetRef === e.ref ? "is-active" : null,
+      "aria-label": `${pName(e.provider)}, ${STATUS[s]}. Open details`,
+      onclick: () => openSheet(e.ref),
+      onkeydown: (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          openSheet(e.ref);
+        }
+      },
+    },
+    h(
+      "td",
+      {},
+      h(
+        "div",
+        { class: "cell-provider" },
+        mark(e.provider),
+        h("span", { class: "provider-name" }, e.provider ? pName(e.provider) : "Unknown"),
+        !e.provider ? h("span", { class: "tag" }, "Choose provider") : !e.confident ? h("span", { class: "tag", title: "Detected from the key format. Open to confirm." }, "Guess") : null,
+      ),
+    ),
+    h("td", {}, h("span", { class: "key-text in-table" }, e.masked)),
+    h("td", { class: "col-source" }, h("span", { class: "source-text", title: (e.sources || []).join("\n") }, e.sources?.length ? e.sources.join(", ") : "Pasted")),
+    h("td", {}, statusEl(s)),
+    h(
+      "td",
+      { class: "num col-latency" },
+      r.latencyMs != null && s !== "checking" ? h("span", { class: r.latencyMs > 1500 ? "warn-text" : null }, `${r.latencyMs} ms`) : pending(),
+    ),
+    h("td", { class: "num col-models" }, live && r.modelCount ? String(r.modelCount) : pending()),
+    h("td", { class: "num col-credit" }, live && r.balance ? r.balance : pending()),
+    h("td", { class: "col-actions" }, menuBtn),
+  );
+  return tr;
+}
+
+function counts() {
+  const c = { all: state.entries.length, live: 0, issues: 0, pending: 0, checking: 0 };
+  for (const e of state.entries) {
+    const s = statusOf(e);
+    if (s === "live") c.live++;
+    else if (isIssue(s)) c.issues++;
+    else if (s === "checking") c.checking++;
+    else c.pending++;
+  }
+  return c;
+}
+
+function renderTabs() {
+  const c = counts();
+  const tabs = [
+    ["all", "All", c.all],
+    ["live", "Live", c.live],
+    ["issues", "Needs attention", c.issues],
+    ["pending", "Not checked", c.pending],
+  ];
+  $("tabs").replaceChildren(
+    ...tabs
+      .filter(([id, , n]) => id === "all" || id === state.filter || n > 0)
+      .map(([id, label, n]) =>
+        h(
+          "button",
+          {
+            type: "button",
+            role: "tab",
+            "aria-selected": String(state.filter === id),
+            onclick: () => {
+              state.filter = id;
+              render();
+            },
+          },
+          label,
+          h("span", { class: "count" }, n),
+        ),
+      ),
+  );
+}
+
+function renderFoot() {
+  const c = counts();
+  const lat = state.entries.filter((e) => statusOf(e) === "live" && e.result?.latencyMs != null).map((e) => e.result.latencyMs);
+  const avg = lat.length ? Math.round(lat.reduce((a, b) => a + b, 0) / lat.length) : null;
+  $("cardFoot").replaceChildren(
+    h(
+      "div",
+      { class: "foot-stats" },
+      h("span", {}, h("b", {}, c.all), ` ${c.all === 1 ? "key" : "keys"}`),
+      h("span", {}, h("b", {}, c.live), " live"),
+      c.issues ? h("span", {}, h("b", {}, c.issues), " need attention") : null,
+      avg != null ? h("span", {}, "avg ", h("b", {}, `${avg} ms`)) : null,
+      c.checking ? h("span", {}, `checking ${c.checking}…`) : null,
+    ),
+    h("span", {}, state.lastChecked ? `Last checked ${state.lastChecked.toLocaleTimeString()}` : "Nothing checked yet"),
+  );
+  document.title = c.all && !c.checking && state.lastChecked ? `${c.live}/${c.all} live · apilive` : "apilive";
+}
+
+function renderBanner() {
+  const envEntries = state.entries.filter((e) => e.origin === "env");
+  const unchecked = envEntries.filter((e) => !e.result && !e.checking);
+  $("envBanner").hidden = !unchecked.length;
+  if (!unchecked.length) return;
+  const where = [...new Set(envEntries.flatMap((e) => e.sources.map((s) => s.split(" · ").pop())))].map((s) => (s === "env" ? "environment variables" : s));
+  $("envBannerTitle").textContent = `Found ${plural(unchecked.length, "key")} in ${state.cwd || "this folder"}`;
+  $("envBannerSub").textContent = `From ${where.join(", ")}. Nothing is sent until you check.`;
+}
+
