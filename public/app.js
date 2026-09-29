@@ -634,3 +634,74 @@ function renderBanner() {
   $("envBannerSub").textContent = `From ${where.join(", ")}. Nothing is sent until you check.`;
 }
 
+// ------------------------------------------------------------------ menus
+
+let menuAnchor = null;
+
+function openMenu(anchor, items) {
+  const menu = $("menu");
+  if (menuAnchor === anchor && !menu.hidden) return closeMenu();
+  menu.replaceChildren(
+    ...items.map((it) => {
+      if (it === "sep") return h("hr");
+      if (it.note) return h("div", { class: "menu-note" }, it.note);
+      const attrs = { role: "menuitem", class: it.danger ? "danger" : null };
+      if (it.href) return h("a", { ...attrs, href: it.href, target: "_blank", rel: "noopener noreferrer", onclick: closeMenu }, icon(it.icon), it.label);
+      return h(
+        "button",
+        {
+          ...attrs,
+          type: "button",
+          disabled: it.disabled,
+          onclick: () => {
+            closeMenu();
+            it.onClick();
+          },
+        },
+        icon(it.icon),
+        it.label,
+      );
+    }),
+  );
+  menu.hidden = false;
+  menuAnchor = anchor;
+  anchor.setAttribute("aria-expanded", "true");
+  const r = anchor.getBoundingClientRect();
+  const mw = menu.offsetWidth;
+  const mh = menu.offsetHeight;
+  const top = r.bottom + 6 + mh > innerHeight ? r.top - mh - 6 : r.bottom + 6;
+  menu.style.top = `${Math.max(8, top)}px`;
+  menu.style.left = `${Math.min(innerWidth - mw - 8, Math.max(8, r.right - mw))}px`;
+  menu.querySelector("button, a")?.focus();
+}
+
+function closeMenu() {
+  const menu = $("menu");
+  if (menu.hidden) return;
+  menu.hidden = true;
+  menuAnchor?.setAttribute("aria-expanded", "false");
+  menuAnchor = null;
+}
+
+function openRowMenu(anchor, e) {
+  const p = state.byId[e.provider];
+  openMenu(anchor, [
+    { label: "Re-check", icon: "refresh", disabled: !e.provider || e.checking, onClick: () => runChecks([e.ref]) },
+    { label: "View details", icon: "eye", onClick: () => openSheet(e.ref) },
+    { label: "Change provider", icon: "swap", onClick: () => openSheet(e.ref, { focusProvider: true }) },
+    p ? { label: `Open ${p.name} dashboard`, icon: "external", href: p.keyUrl } : null,
+    "sep",
+    { label: "Remove", icon: "trash", danger: true, onClick: () => removeEntry(e.ref) },
+  ].filter(Boolean));
+}
+
+function openExportMenu(anchor) {
+  openMenu(anchor, [
+    { label: "Copy as Markdown", icon: "copy", onClick: exportMarkdown },
+    { label: "Download CSV", icon: "table", onClick: () => download("csv") },
+    { label: "Download JSON", icon: "download", onClick: () => download("json") },
+    "sep",
+    { note: "Keys are always masked in exports." },
+  ]);
+}
+
