@@ -229,3 +229,66 @@ function showView(view, nav) {
   window.scrollTo(0, 0);
 }
 
+// ------------------------------------------------------------------ docs
+
+const docCache = {};
+
+async function loadDoc(slug, anchor) {
+  const body = $("docBody");
+  renderDocNav(slug);
+  if (!docCache[slug]) {
+    body.replaceChildren(h("p", { class: "doc-loading" }, "Loading…"));
+    try {
+      docCache[slug] = await api("GET", `/api/docs/${slug}`);
+    } catch (e) {
+      body.replaceChildren(h("p", { class: "doc-loading" }, `Couldn't load this page: ${e.message}`));
+      return;
+    }
+  }
+  const doc = docCache[slug];
+  body.innerHTML = doc.slug === "license" ? `<h1>License</h1>${doc.html}` : doc.html;
+  document.title = `${doc.title} · apilive`;
+
+  const toc = $("docToc");
+  const items = doc.toc.filter((t) => t.level === 2 || t.level === 3);
+  toc.replaceChildren(
+    ...(items.length > 2
+      ? [
+          h("h4", {}, "On this page"),
+          ...items.map((t) =>
+            h("a", { href: `#/docs/${slug}#${t.id}`, class: `lvl-${t.level}`, onclick: (e) => (e.preventDefault(), scrollToId(t.id)) }, t.text),
+          ),
+        ]
+      : []),
+  );
+  if (anchor) requestAnimationFrame(() => scrollToId(anchor));
+  else body.focus({ preventScroll: true });
+}
+
+function scrollToId(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderDocNav(active) {
+  $("docsNav").replaceChildren(
+    ...DOC_NAV.flatMap(([group, slugs]) => [
+      h("h4", {}, group),
+      ...slugs
+        .filter((s) => state.docs[s])
+        .map((s) => h("a", { href: `#/docs/${s}`, "aria-current": s === active ? "page" : null }, state.docs[s])),
+    ]),
+  );
+}
+
+function wireDocs() {
+  $("docBody").addEventListener("click", (e) => {
+    const a = e.target.closest("a");
+    const href = a?.getAttribute("href");
+    if (href && href.startsWith("#") && !href.startsWith("#/")) {
+      e.preventDefault();
+      scrollToId(href.slice(1));
+    }
+  });
+}
+
