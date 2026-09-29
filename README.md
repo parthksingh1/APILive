@@ -147,3 +147,19 @@ No provider accepted a fake key.
 
 > "Live" means the provider authenticated the key. Providers such as OpenAI don't expose credit balance through the API, so a live key can still hit a quota limit on its first real request.
 
+## Security model
+
+apilive handles secrets, so it's built to be easy to audit:
+
+- **No dependencies.** It uses only Node's built-in `http` and `fetch`. The whole backend is about 1,400 lines of plain JavaScript.
+- **Loopback only.** The server binds to `127.0.0.1` and is unreachable from your network.
+- **DNS-rebinding protection.** Requests whose `Host` isn't `127.0.0.1` or `localhost` on the right port are rejected.
+- **Per-session token.** Every API call needs a random token embedded in the page. Other websites can't read it, so they can't drive the local API.
+- **Strict CSP.** `default-src 'none'` with no third-party scripts, fonts or analytics. The page talks only to `127.0.0.1`.
+- **Keys never reach the browser.** The UI receives masked keys (`sk-proj…7Hq2`) and opaque refs. Raw keys stay in server memory and are dropped when you press Ctrl+C.
+- **One key, one destination.** An ambiguous `sk-…` key is **never** tried against several providers, because that would leak it to the wrong companies. You pick the provider instead.
+- **Nothing logged, no telemetry.** Keys are never written to disk. The only file apilive writes is a tiny `state.json` holding the update-check time and whether you've seen the first-run notice. Provider error messages are scrubbed so a key is never echoed back.
+- **Built for your own keys.** There's a limit of 100 keys per session and a first-run notice that you may only check keys you're authorized to use.
+
+See [SECURITY.md](SECURITY.md) to report a vulnerability.
+
