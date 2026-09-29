@@ -149,3 +149,36 @@ code, kbd, pre { font-family: var(--mono); }
 }
 .kbd-inverse { background: transparent; color: inherit; opacity: 0.6; border-color: currentColor; border-bottom-width: 1px; }
 
+/* ---------------------------------------------------------------- header */
+
+.header { position: sticky; top: 0; z-index: 30; height: var(--header-h); background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px); border-bottom: 1px solid var(--border); }
+.header-inner { height: 100%; display: flex; align-items: center; gap: 28px; }
+.logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
+.logo-mark { width: 22px; height: 22px; }
+.logo-mark rect { fill: var(--text); }
+.logo-mark path { fill: none; stroke: var(--bg); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.logo-text { font-weight: 650; font-size: 15px; letter-spacing: -0.02em; }
+.nav { display: flex; gap: 2px; }
+.nav a { padding: 6px 10px; border-radius: var(--radius-sm); color: var(--text-2); text-decoration: none; font-size: 13.5px; transition: color .12s, background .12s; }
+.nav a:hover { color: var(--text); background: var(--hover); }
+.nav a[aria-current="page"] { color: var(--text); font-weight: 500; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.chip .icon { width: 12px; height: 12px; }
+.chip-local { color: var(--text-2); }
+.chip-demo { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 35%, transparent); background: var(--amber-bg); }
+.chip-update { color: var(--blue); border-color: color-mix(in srgb, var(--blue) 35%, transparent); background: var(--blue-bg); font-weight: 500; }
+.chip-update:hover { border-color: var(--blue); }
+.chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.btn-icon { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-sm); color: var(--text-2); text-decoration: none; transition: color .12s, background .12s; }
+.btn-icon:hover { color: var(--text); background: var(--hover); }
+.only-dark { display: none !important; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .only-dark { display: inline-flex !important; }
+  :root:not([data-theme="light"]) .only-light { display: none !important; }
+}
+:root[data-theme="dark"] .only-dark { display: inline-flex !important; }
+:root[data-theme="dark"] .only-light { display: none !important; }
+
