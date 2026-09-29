@@ -202,3 +202,30 @@ function wireAck() {
   dlg.querySelectorAll("[data-close-link]").forEach((a) => a.addEventListener("click", () => dlg.close()));
 }
 
+// ------------------------------------------------------------------ router
+
+function route() {
+  const raw = location.hash.replace(/^#/, "") || "/";
+  const [path, anchor] = raw.split("#");
+  const m = path.match(/^\/docs\/([a-z]+)/);
+  closeSheet();
+  closeMenu();
+  if (m && state.docs[m[1]]) {
+    showView("docs", m[1] === "changelog" ? "changelog" : "docs");
+    loadDoc(m[1], anchor);
+  } else {
+    showView("keys", "keys");
+    if (!acked()) requireAck(() => {});
+  }
+}
+
+function showView(view, nav) {
+  $("view-keys").hidden = view !== "keys";
+  $("view-docs").hidden = view !== "docs";
+  document.querySelectorAll("[data-nav]").forEach((a) => {
+    if (a.dataset.nav === nav) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  });
+  window.scrollTo(0, 0);
+}
+
