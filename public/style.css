@@ -202,3 +202,20 @@ code, kbd, pre { font-family: var(--mono); }
 .btn:disabled { opacity: 0.45; }
 .btn-sm { height: 30px; padding: 0 10px; font-size: 13px; }
 
+/* ---------------------------------------------------------------- page */
+
+.main { flex: 1; padding-top: 36px; padding-bottom: 64px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.page-head h1 { font-size: 24px; letter-spacing: -0.022em; }
+.page-desc { margin-top: 4px; color: var(--text-2); }
+.page-actions { display: flex; gap: 8px; }
+
+.banner {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 12px 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-subtle);
+}
+.banner-icon { color: var(--text-2); }
+.banner-text { flex: 1; min-width: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.banner-text strong { font-weight: 500; }
+.banner-text span { color: var(--text-2); font-size: 13px; }
+
