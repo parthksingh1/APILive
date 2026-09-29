@@ -113,3 +113,14 @@ jobs:
 
 Other commands: `apilive update` (update in place), `apilive privacy`, `apilive terms`. The [Guide](docs/GUIDE.md) has the full reference, troubleshooting and FAQ.
 
+## Updating
+
+apilive checks the npm registry for a newer version at most once a day and tells you in the terminal and the app. It **never installs anything by itself**.
+
+| How you run it | How to update |
+|---|---|
+| `npx apilive` | `npx apilive@latest` |
+| Global install | `apilive update` (asks, then runs `npm install -g apilive@latest`) |
+
+The check sends one anonymous request to `registry.npmjs.org`, with no keys and no usage data. Turn it off with `--no-update-check`, `NO_UPDATE_NOTIFIER=1` or `DO_NOT_TRACK=1`. It's skipped in CI. Release notes are in the [Changelog](CHANGELOG.md). Releases are published from GitHub Actions with [npm provenance](https://docs.npmjs.com/generating-provenance-statements/), so you can verify with `npm audit signatures` that the package was built from this repository.
+
