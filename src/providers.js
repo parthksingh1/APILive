@@ -163,6 +163,26 @@ const list = [
     regions: ["https://api.x.ai/v1"],
     ...openAICompatible(),
   },
+  {
+    id: "together",
+    name: "Together AI",
+    mark: "To",
+    keyUrl: "https://api.together.ai/settings/api-keys",
+    env: ["TOGETHER_API_KEY", "TOGETHERAI_API_KEY"],
+    pattern: /^tgp_v1_[\w-]{20,}$/,
+    regions: ["https://api.together.xyz/v1"],
+    ...openAICompatible(),
+  },
+  {
+    id: "cohere",
+    name: "Cohere",
+    mark: "Co",
+    keyUrl: "https://dashboard.cohere.com/api-keys",
+    env: ["COHERE_API_KEY", "CO_API_KEY"],
+    regions: ["https://api.cohere.com/v1"],
+    request: (key, base) => ({ url: `${base}/models?page_size=1000`, headers: bearer(key) }),
+    parse: (body) => ({ models: modelIds(body?.models) }),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
