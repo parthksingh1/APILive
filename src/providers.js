@@ -270,6 +270,25 @@ const list = [
     regions: ["https://api.fireworks.ai/inference/v1"],
     ...openAICompatible(),
   },
+  {
+    id: "sambanova",
+    name: "SambaNova",
+    mark: "Sa",
+    keyUrl: "https://cloud.sambanova.ai/apis",
+    env: ["SAMBANOVA_API_KEY"],
+    regions: ["https://api.sambanova.ai/v1"],
+    // SambaNova's /models is public, so it can't prove anything. Instead we
+    // send an embeddings request with no input: a bad key gets 401, a good key
+    // gets a validation error. Nothing is ever computed or billed.
+    request: (key, base) => ({
+      url: `${base}/embeddings`,
+      method: "POST",
+      headers: { ...bearer(key), "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "E5-Mistral-7B-Instruct" }),
+    }),
+    acceptStatus: [400, 404, 422],
+    parse: () => ({}),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
