@@ -1,0 +1,27 @@
+name: Provider request
+description: Ask for support for another API provider
+labels: [provider]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Provider name and website
+    validations:
+      required: true
+  - type: input
+    id: docs
+    attributes:
+      label: Link to API docs
+      description: Ideally an endpoint that lists models or shows account or balance details and requires an API key.
+  - type: input
+    id: env
+    attributes:
+      label: Usual environment variable name
+      placeholder: ACME_API_KEY
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: This request contains no real API keys.
+          required: true
