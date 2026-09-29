@@ -917,3 +917,22 @@ function wireUpdate() {
   dlg.addEventListener("click", (e) => e.target === dlg && dlg.close());
 }
 
+// ------------------------------------------------------------------ providers
+
+function renderProviders() {
+  $("providerList").replaceChildren(
+    ...state.providers.map((p) =>
+      h(
+        "li",
+        {},
+        h(
+          "a",
+          { href: p.keyUrl, target: "_blank", rel: "noopener noreferrer", title: `Open the ${p.name} API key page` },
+          mark(p.id),
+          h("span", { class: "pl-text" }, h("span", { class: "pl-name" }, p.name), h("span", { class: "pl-env" }, p.env[0])),
+        ),
+      ),
+    ),
+  );
+}
+
