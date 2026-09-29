@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="apilive-token" content="__APILIVE_TOKEN__" />
+    <title>apilive</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="header">
+      <div class="container header-inner">
+        <a class="logo" href="#/" aria-label="apilive home">
+          <svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="1" y="1" width="22" height="22" rx="6" />
+            <path d="M5 12.5h3.2l1.8-4 3 8 1.9-4H19" />
+          </svg>
+          <span class="logo-text">apilive</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="#/" data-nav="keys">Keys</a>
+          <a href="#/docs/guide" data-nav="docs">Docs</a>
+          <a href="#/docs/changelog" data-nav="changelog">Changelog</a>
+        </nav>
+        <div class="header-right">
+          <button class="chip chip-update" id="updateChip" type="button" hidden>
+            <span class="chip-dot"></span><span id="updateChipText">Update available</span>
+          </button>
+          <span class="chip chip-demo" id="demoChip" hidden title="Started with --demo. Sample keys and simulated responses.">Demo data</span>
+          <span class="chip chip-local" title="Served from 127.0.0.1. Not reachable from your network.">
+            <span class="icon" data-icon="lock"></span><span>Local</span>
+          </span>
+          <a class="btn-icon" href="https://github.com/parthksingh1/apilive" target="_blank" rel="noopener noreferrer" aria-label="Source code on GitHub" title="Source code on GitHub">
+            <span class="icon" data-icon="github"></span>
+          </a>
+          <button class="btn-icon" id="themeBtn" type="button" aria-label="Switch colour theme" title="Switch theme">
+            <span class="icon only-light" data-icon="moon"></span>
+            <span class="icon only-dark" data-icon="sun"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="container main">
+      <!-- Keys ----------------------------------------------------------- -->
+      <section id="view-keys" class="view" aria-labelledby="keysTitle">
+        <div class="page-head">
+          <div>
+            <h1 id="keysTitle">API keys</h1>
+            <p class="page-desc">Each key is checked against its provider's model or account endpoint. No tokens are generated.</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-secondary" id="recheckAllBtn" type="button">
+              <span class="icon" data-icon="refresh"></span><span>Re-check all</span>
+            </button>
+            <button class="btn btn-primary" id="addBtn" type="button">
+              <span class="icon" data-icon="plus"></span><span>Add keys</span><kbd class="kbd kbd-inverse">K</kbd>
+            </button>
+          </div>
+        </div>
+
+        <div class="banner" id="envBanner" role="status" hidden>
+          <span class="icon banner-icon" data-icon="file"></span>
+          <div class="banner-text">
+            <strong id="envBannerTitle"></strong>
+            <span id="envBannerSub"></span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="envCheckBtn" type="button">Check all</button>
+        </div>
+
+        <div class="card">
+          <div class="toolbar">
+            <div class="tabs" id="tabs" role="tablist" aria-label="Filter by status"></div>
+            <div class="toolbar-right">
+              <label class="search">
+                <span class="icon" data-icon="search"></span>
+                <input id="searchInput" type="search" placeholder="Filter" aria-label="Filter keys" autocomplete="off" />
+                <kbd class="kbd">/</kbd>
+              </label>
+              <button class="btn btn-secondary btn-sm" id="exportBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+                <span class="icon" data-icon="download"></span><span class="hide-sm">Export</span><span class="icon icon-sm" data-icon="chevron"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table class="table" id="table">
+              <thead>
+                <tr>
+                  <th scope="col">Provider</th>
+                  <th scope="col">Key</th>
+                  <th scope="col" class="col-source">Source</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="num col-latency">Latency</th>
+                  <th scope="col" class="num col-models">Models</th>
+                  <th scope="col" class="num col-credit">Credit</th>
+                  <th scope="col" class="col-actions"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="empty" id="emptyState" hidden>
+            <div class="empty-icon"><span class="icon" data-icon="key"></span></div>
+            <h2>No keys yet</h2>
+            <p>Run apilive inside a project to pick up keys from its <code>.env</code> files, or add keys yourself.</p>
+            <div class="empty-actions">
+              <button class="btn btn-primary" id="emptyAddBtn" type="button"><span class="icon" data-icon="plus"></span>Add keys</button>
+              <a class="btn btn-secondary" href="#/docs/guide">Read the guide</a>
+            </div>
+          </div>
+          <p class="no-match" id="noMatch" hidden>No keys match this filter.</p>
+
+          <div class="card-foot" id="cardFoot"></div>
+        </div>
+
+        <section class="providers" aria-labelledby="providersTitle">
+          <div class="section-head">
+            <h2 id="providersTitle">Supported providers</h2>
+            <p>apilive is independent and not affiliated with any provider. Names are trademarks of their respective owners.</p>
+          </div>
+          <ul class="provider-list" id="providerList"></ul>
+        </section>
+      </section>
+
+      <!-- Docs ----------------------------------------------------------- -->
+      <section id="view-docs" class="view" hidden>
+        <div class="docs">
+          <nav class="docs-nav" id="docsNav" aria-label="Documentation"></nav>
+          <article class="docs-article">
+            <div class="prose" id="docBody" tabindex="-1"></div>
+          </article>
+          <aside class="docs-toc" id="docToc" aria-label="On this page"></aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div class="footer-left">
+          <span>apilive <span id="footerVersion"></span></span>
+          <span class="footer-note">Not affiliated with any AI provider. Open source under the MIT License.</span>
+        </div>
+        <nav class="footer-links" aria-label="Legal and help">
+          <a href="#/docs/guide">Docs</a>
+          <a href="#/docs/privacy">Privacy</a>
+          <a href="#/docs/terms">Terms</a>
+          <a href="#/docs/security">Security</a>
+          <a href="#/docs/support">Support</a>
+          <a href="#/docs/license">License</a>
+        </nav>
+      </div>
+    </footer>
+
+    <!-- Add keys dialog -->
+    <dialog class="dialog" id="addDialog" aria-labelledby="addTitle" aria-describedby="addDesc">
+      <div class="dialog-head">
+        <div>
+          <h2 id="addTitle">Add keys</h2>
+          <p id="addDesc">Paste one key per line, or the contents of a <code>.env</code> file.</p>
+        </div>
+        <button class="btn-icon" type="button" data-close aria-label="Close"><span class="icon" data-icon="x"></span></button>
+      </div>
+      <div class="dialog-body">
+        <textarea id="keyInput" class="textarea" rows="6" spellcheck="false" autocomplete="off" autocapitalize="off" data-gramm="false" aria-label="API keys"
+          placeholder="OPENAI_API_KEY=sk-proj-…&#10;sk-ant-api03-…&#10;gsk_…"></textarea>
+        <div class="field-inline">
+          <label for="providerSelect">Provider</label>
+          <div class="select">
+            <select id="providerSelect"><option value="">Detect automatically</option></select>
+            <span class="icon icon-sm" data-icon="chevron"></span>
+          </div>
+        </div>
+        <div class="preview" id="preview" aria-live="polite"></div>
+      </div>
+      <div class="dialog-foot">
+        <p class="dialog-note"><span class="icon icon-sm" data-icon="lock"></span>Held in memory on this computer. Sent only to each key's own provider.</p>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" type="button" data-close>Cancel</button>
+          <button class="btn btn-primary" type="button" id="addSubmit" disabled>Check keys</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- First-run acknowledgement -->
+    <dialog class="dialog dialog-sm" id="ackDialog" aria-labelledby="ackTitle">
+      <div class="dialog-head">
+        <div>
+          <h2 id="ackTitle">Before you start</h2>
+          <p>apilive checks keys by calling each provider's API from your computer.</p>
+        </div>
+      </div>
+      <div class="dialog-body">
+        <ul class="checklist">
+          <li><span class="icon" data-icon="shield"></span><span><strong>Only check keys you own or are authorized to use.</strong> Testing anyone else's keys may be illegal.</span></li>
+          <li><span class="icon" data-icon="lock"></span><span>Keys stay on this computer. They're never stored, and never sent to the apilive maintainers.</span></li>
+          <li><span class="icon" data-icon="info"></span><span>Checks use free endpoints, but each provider sets its own pricing and limits.</span></li>
+        </ul>
+        <label class="checkbox">
+          <input type="checkbox" id="ackCheck" />
+          <span>I agree to the <a href="#/docs/terms" data-close-link>Terms of Use</a> and have read the <a href="#/docs/privacy" data-close-link>Privacy Policy</a>.</span>
+        </label>
+      </div>
+      <div class="dialog-foot dialog-foot-end">
+        <button class="btn btn-primary" type="button" id="ackContinue" disabled>Continue</button>
+      </div>
+    </dialog>
+
+    <!-- Update dialog -->
+    <dialog class="dialog dialog-sm" id="updateDialog" aria-labelledby="updateTitle">
+      <div class="dialog-head">
+        <div>
+          <h2 id="updateTitle">Update available</h2>
+          <p id="updateDesc"></p>
+        </div>
+        <button class="btn-icon" type="button" data-close aria-label="Close"><span class="icon" data-icon="x"></span></button>
+      </div>
+      <div class="dialog-body">
+        <p class="muted-text">Stop apilive with <kbd class="kbd">Ctrl</kbd> <kbd class="kbd">C</kbd>, then run:</p>
+        <button class="command" type="button" id="updateCommand" title="Copy command">
+          <span class="command-prompt">$</span><span id="updateCommandText"></span><span class="icon icon-sm" data-icon="copy"></span>
+        </button>
+        <p class="muted-text small">apilive never installs updates by itself. You decide when to update.</p>
+      </div>
+      <div class="dialog-foot dialog-foot-end">
+        <a class="btn btn-secondary" id="releaseNotesLink" target="_blank" rel="noopener noreferrer">Release notes<span class="icon icon-sm" data-icon="external"></span></a>
+        <button class="btn btn-primary" type="button" data-close>Done</button>
+      </div>
+    </dialog>
+
+    <!-- Detail sheet -->
+    <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
+    <aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden></aside>
+
+    <div class="menu" id="menu" role="menu" hidden></div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+  </body>
+</html>
