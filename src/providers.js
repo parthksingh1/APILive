@@ -289,6 +289,33 @@ const list = [
     acceptStatus: [400, 404, 422],
     parse: () => ({}),
   },
+  {
+    id: "huggingface",
+    name: "Hugging Face",
+    mark: "HF",
+    keyUrl: "https://huggingface.co/settings/tokens",
+    env: ["HF_TOKEN", "HUGGINGFACE_API_KEY", "HUGGING_FACE_HUB_TOKEN", "HUGGINGFACEHUB_API_TOKEN"],
+    pattern: /^hf_\w{20,}$/,
+    regions: ["https://huggingface.co/api"],
+    request: (key, base) => ({ url: `${base}/whoami-v2`, headers: bearer(key) }),
+    parse: (body) => {
+      const role = body?.auth?.accessToken?.role;
+      return { account: [body?.name, role && `${role} token`].filter(Boolean).join(" · ") || null };
+    },
+  },
+  {
+    id: "replicate",
+    name: "Replicate",
+    mark: "Re",
+    keyUrl: "https://replicate.com/account/api-tokens",
+    env: ["REPLICATE_API_TOKEN", "REPLICATE_API_KEY"],
+    pattern: /^r8_\w{20,}$/,
+    regions: ["https://api.replicate.com/v1"],
+    request: (key, base) => ({ url: `${base}/account`, headers: bearer(key) }),
+    parse: (body) => ({
+      account: [body?.username, body?.type].filter(Boolean).join(" · ") || null,
+    }),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
