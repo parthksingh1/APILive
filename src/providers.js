@@ -84,6 +84,31 @@ const list = [
     }),
     parse: (body) => ({ models: modelIds(body?.data) }),
   },
+  {
+    id: "gemini",
+    name: "Google Gemini",
+    mark: "Ge",
+    keyUrl: "https://aistudio.google.com/app/apikey",
+    env: ["GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"],
+    pattern: /^AIza[\w-]{35}$/,
+    regions: ["https://generativelanguage.googleapis.com/v1beta"],
+    // Header auth keeps the key out of URLs (and any proxy logs).
+    request: (key, base) => ({
+      url: `${base}/models?pageSize=1000`,
+      headers: { "x-goog-api-key": key },
+    }),
+    parse: (body) => ({ models: modelIds(body?.models) }),
+  },
+  {
+    id: "groq",
+    name: "Groq",
+    mark: "Gq",
+    keyUrl: "https://console.groq.com/keys",
+    env: ["GROQ_API_KEY"],
+    pattern: /^gsk_\w{20,}$/,
+    regions: ["https://api.groq.com/openai/v1"],
+    ...openAICompatible(),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
