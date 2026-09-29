@@ -936,3 +936,91 @@ function renderProviders() {
   );
 }
 
+// ------------------------------------------------------------------ wiring
+
+function wire() {
+  $("addBtn").addEventListener("click", openAdd);
+  $("emptyAddBtn").addEventListener("click", openAdd);
+  $("recheckAllBtn").addEventListener("click", () => runChecks(state.entries.map((e) => e.ref)));
+  $("envCheckBtn").addEventListener("click", () => runChecks(state.entries.filter((e) => e.origin === "env").map((e) => e.ref)));
+  $("exportBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!state.entries.length) return toast("Nothing to export yet", { error: true });
+    openExportMenu(e.currentTarget);
+  });
+  $("searchInput").addEventListener("input", (e) => {
+    state.query = e.target.value;
+    render();
+  });
+  $("sheetBackdrop").addEventListener("click", closeSheet);
+
+  document.addEventListener("click", (e) => {
+    if (!$("menu").contains(e.target)) closeMenu();
+  });
+  window.addEventListener("resize", closeMenu);
+  window.addEventListener("scroll", closeMenu, { passive: true });
+  window.addEventListener("hashchange", route);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (!$("menu").hidden) return closeMenu();
+      if (state.sheetRef) return closeSheet();
+    }
+    if (document.querySelector("dialog[open]") || e.metaKey || e.ctrlKey || e.altKey || isTyping()) return;
+    if ($("view-keys").hidden) return;
+    if (e.key === "k" || e.key === "K") {
+      e.preventDefault();
+      openAdd();
+    } else if (e.key === "/") {
+      e.preventDefault();
+      $("searchInput").focus();
+    } else if ((e.key === "r" || e.key === "R") && !state.sheetRef) {
+      e.preventDefault();
+      if (!$("recheckAllBtn").disabled) runChecks(state.entries.map((x) => x.ref));
+    }
+  });
+
+  // Simple focus trap for the sheet.
+  $("sheet").addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const f = [...$("sheet").querySelectorAll("button:not(:disabled), a[href], input, select")];
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) {
+      e.preventDefault();
+      f[f.length - 1].focus();
+    } else if (!e.shiftKey && document.activeElement === f[f.length - 1]) {
+      e.preventDefault();
+      f[0].focus();
+    }
+  });
+}
+
+async function init() {
+  initTheme();
+  hydrateIcons();
+  wire();
+  wireAck();
+  wireAdd();
+  wireDocs();
+  wireUpdate();
+  try {
+    const s = await api("GET", "/api/state");
+    state.providers = s.providers;
+    state.byId = Object.fromEntries(s.providers.map((p) => [p.id, p]));
+    state.docs = Object.fromEntries(s.docs.map((d) => [d.slug, d.title]));
+    state.cwd = s.cwd;
+    state.maxKeys = s.maxKeys;
+    state.entries = s.keys.map(prepare);
+    $("footerVersion").textContent = `v${s.version}`;
+    $("demoChip").hidden = !s.demo;
+    for (const p of s.providers) select.append(h("option", { value: p.id }, p.name));
+  } catch {
+    toast("Can't reach apilive. Is it still running in your terminal?", { error: true });
+  }
+  renderProviders();
+  render();
+  route();
+  loadUpdate();
+}
+
+init();
