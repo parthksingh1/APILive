@@ -286,7 +286,7 @@ const list = [
       headers: { ...bearer(key), "Content-Type": "application/json" },
       body: JSON.stringify({ model: "E5-Mistral-7B-Instruct" }),
     }),
-    acceptStatus: [400, 404, 422],
+    acceptStatus: [400, 422],
     parse: () => ({}),
   },
   {

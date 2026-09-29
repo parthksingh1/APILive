@@ -69,7 +69,17 @@ function extractMessage(res) {
 
 export function classify(provider, res) {
   const s = res.status;
-  if ((s >= 200 && s < 300) || provider.acceptStatus?.includes(s)) return "live";
+  // A 2xx only counts if it's a real API (JSON) response — not an HTML
+  // captive portal, bot challenge or proxy page.
+  if (s >= 200 && s < 300) return res.body !== null ? "live" : "error";
+  // Validation-probe providers: the key authenticated only if the provider
+  // answered with a JSON validation error that isn't about authentication.
+  // Anything else (empty 404s from some regions, HTML) is unverified.
+  if (provider.acceptStatus?.includes(s)) {
+    const msg = extractMessage(res);
+    const validation = res.body && msg !== `HTTP ${s}` && !AUTH_HINT.test(msg);
+    return validation ? "live" : AUTH_HINT.test(msg) ? "invalid" : "error";
+  }
   if (s === 401 || s === 403) return "invalid";
   if (s === 402) return "no_credit";
   if (s === 429) return "limited";
