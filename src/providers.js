@@ -316,6 +316,24 @@ const list = [
       account: [body?.username, body?.type].filter(Boolean).join(" · ") || null,
     }),
   },
+  {
+    id: "novita",
+    name: "Novita AI",
+    mark: "No",
+    keyUrl: "https://novita.ai/settings/key-management",
+    env: ["NOVITA_API_KEY"],
+    regions: ["https://api.novita.ai"],
+    // Novita's /models is public. The billing endpoint requires auth and is
+    // free. Amounts are in 1/10000 USD.
+    request: (key, base) => ({
+      url: `${base}/openapi/v1/billing/balance/detail`,
+      headers: bearer(key),
+    }),
+    parse: (body) =>
+      body?.availableBalance != null
+        ? { balance: money(Number(body.availableBalance) / 10000) }
+        : {},
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
