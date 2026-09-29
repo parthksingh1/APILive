@@ -48,13 +48,13 @@
   ],
   "author": "Parth Kumar Singh",
   "license": "MIT",
-  "homepage": "https://github.com/parthksingh1/apilive#readme",
+  "homepage": "https://github.com/parthksingh1/APILive#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/parthksingh1/apilive.git"
+    "url": "git+https://github.com/parthksingh1/APILive.git"
   },
   "bugs": {
-    "url": "https://github.com/parthksingh1/apilive/issues"
+    "url": "https://github.com/parthksingh1/APILive/issues"
   },
   "engines": {
     "node": ">=18"
