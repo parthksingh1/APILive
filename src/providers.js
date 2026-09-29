@@ -223,6 +223,33 @@ const list = [
     regions: ["https://api.z.ai/api/paas/v4", "https://open.bigmodel.cn/api/paas/v4"],
     ...openAICompatible(),
   },
+  {
+    id: "siliconflow",
+    name: "SiliconFlow",
+    mark: "SF",
+    keyUrl: "https://cloud.siliconflow.com/account/ak",
+    env: ["SILICONFLOW_API_KEY", "SILICON_FLOW_API_KEY"],
+    loose: /^sk-[a-z]{40,}$/,
+    regions: ["https://api.siliconflow.com/v1", "https://api.siliconflow.cn/v1"],
+    ...openAICompatible(),
+    async extra(key, { base, get }) {
+      const res = await get(`${base}/user/info`, bearer(key));
+      const d = res.body?.data;
+      if (d?.totalBalance == null) return {};
+      const cur = base.includes(".cn") ? "CNY" : "USD";
+      return { balance: money(d.totalBalance, cur), account: d.name || d.email || null };
+    },
+  },
+  {
+    id: "perplexity",
+    name: "Perplexity",
+    mark: "Px",
+    keyUrl: "https://www.perplexity.ai/settings/api",
+    env: ["PERPLEXITY_API_KEY", "PPLX_API_KEY"],
+    pattern: /^pplx-\w{20,}$/,
+    regions: ["https://api.perplexity.ai/v1"],
+    ...openAICompatible(),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
