@@ -200,6 +200,29 @@ const list = [
       return { balance: money(d.available_balance, cur) };
     },
   },
+  {
+    id: "qwen",
+    name: "Qwen (DashScope)",
+    mark: "Qw",
+    keyUrl: "https://bailian.console.alibabacloud.com/?apiKey=1",
+    env: ["DASHSCOPE_API_KEY", "QWEN_API_KEY"],
+    loose: /^sk-[a-f0-9]{32}$/,
+    regions: [
+      "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+      "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    ],
+    ...openAICompatible(),
+  },
+  {
+    id: "glm",
+    name: "GLM (Zhipu / Z.ai)",
+    mark: "GL",
+    keyUrl: "https://z.ai/manage-apikey/apikey-list",
+    env: ["ZHIPUAI_API_KEY", "ZAI_API_KEY", "GLM_API_KEY"],
+    pattern: /^[a-f0-9]{32}\.[A-Za-z0-9]{16}$/,
+    regions: ["https://api.z.ai/api/paas/v4", "https://open.bigmodel.cn/api/paas/v4"],
+    ...openAICompatible(),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
