@@ -334,6 +334,33 @@ const list = [
         ? { balance: money(Number(body.availableBalance) / 10000) }
         : {},
   },
+  {
+    id: "deepinfra",
+    name: "DeepInfra",
+    mark: "DI",
+    keyUrl: "https://deepinfra.com/dash/api_keys",
+    env: ["DEEPINFRA_API_KEY", "DEEPINFRA_TOKEN"],
+    regions: ["https://api.deepinfra.com/v1/openai"],
+    ...openAICompatible(),
+  },
+  {
+    id: "hyperbolic",
+    name: "Hyperbolic",
+    mark: "Hy",
+    keyUrl: "https://app.hyperbolic.xyz/settings",
+    env: ["HYPERBOLIC_API_KEY"],
+    regions: ["https://api.hyperbolic.xyz/v1"],
+    ...openAICompatible(),
+  },
+  {
+    id: "nebius",
+    name: "Nebius AI Studio",
+    mark: "Nb",
+    keyUrl: "https://studio.nebius.com/settings/api-keys",
+    env: ["NEBIUS_API_KEY"],
+    regions: ["https://api.studio.nebius.com/v1"],
+    ...openAICompatible(),
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
