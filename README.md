@@ -192,3 +192,15 @@ npm test             # unit + server security tests
 npm run verify       # live fake-key check against every provider
 ```
 
+## Legal
+
+- **Authorized use only.** Only check keys you own or are explicitly authorized to test. Checking leaked or found keys may be illegal. See the [Terms of Use](TERMS.md).
+- **Privacy.** apilive collects nothing and the maintainers receive nothing. See the [Privacy Policy](PRIVACY.md).
+- **Not affiliated.** apilive is an independent project, not affiliated with, endorsed by or sponsored by any provider it supports. Product names are trademarks of their respective owners and are used only to identify services.
+- **No warranty.** apilive is provided "as is", without warranty of any kind. See the [License](LICENSE).
+
+Help: [Support](SUPPORT.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
+
+## License
+
+[MIT](LICENSE) © 2026 Parth Kumar Singh
