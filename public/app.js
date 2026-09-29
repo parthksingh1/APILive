@@ -167,3 +167,38 @@ function initTheme() {
   });
 }
 
+// ------------------------------------------------------------------ acknowledgement
+
+function acked() {
+  try {
+    return localStorage.getItem(ACK_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+let afterAck = null;
+function requireAck(fn) {
+  if (acked()) return fn();
+  afterAck = fn;
+  $("ackCheck").checked = false;
+  $("ackContinue").disabled = true;
+  if (!$("ackDialog").open) $("ackDialog").showModal();
+}
+
+function wireAck() {
+  const dlg = $("ackDialog");
+  dlg.addEventListener("cancel", (e) => e.preventDefault());
+  $("ackCheck").addEventListener("change", (e) => ($("ackContinue").disabled = !e.target.checked));
+  $("ackContinue").addEventListener("click", () => {
+    try {
+      localStorage.setItem(ACK_KEY, "1");
+    } catch {}
+    dlg.close();
+    const fn = afterAck;
+    afterAck = null;
+    fn?.();
+  });
+  dlg.querySelectorAll("[data-close-link]").forEach((a) => a.addEventListener("click", () => dlg.close()));
+}
+
