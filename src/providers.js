@@ -183,6 +183,23 @@ const list = [
     request: (key, base) => ({ url: `${base}/models?page_size=1000`, headers: bearer(key) }),
     parse: (body) => ({ models: modelIds(body?.models) }),
   },
+  {
+    id: "kimi",
+    name: "Kimi (Moonshot)",
+    mark: "Ki",
+    keyUrl: "https://platform.moonshot.ai/console/api-keys",
+    env: ["MOONSHOT_API_KEY", "KIMI_API_KEY"],
+    loose: /^sk-\w{40,}$/,
+    regions: ["https://api.moonshot.ai/v1", "https://api.moonshot.cn/v1"],
+    ...openAICompatible(),
+    async extra(key, { base, get }) {
+      const res = await get(`${base}/users/me/balance`, bearer(key));
+      const d = res.body?.data;
+      if (d?.available_balance == null) return {};
+      const cur = base.includes(".cn") ? "CNY" : "USD";
+      return { balance: money(d.available_balance, cur) };
+    },
+  },
 ];
 
 export const providers = Object.fromEntries(list.map((p) => [p.id, p]));
