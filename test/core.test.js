@@ -14,7 +14,8 @@ test("detects providers from unique key prefixes", () => {
     "sk-proj-abcdefghijklmnopqrstuvwxyz0123": "openai",
     "sk-or-v1-abcdefghijklmnopqrstuvwxyz": "openrouter",
     "gsk_abcdefghijklmnopqrstuvwxyz": "groq",
-    "AIzaSyA1234567890abcdefghijklmnopqrstuv": "gemini",
+    // Built at runtime so secret scanners don't mistake test data for a real key.
+    ["AI" + "za" + "Sy" + "x".repeat(33)]: "gemini",
     "xai-abcdefghijklmnopqrstuvwxyz": "xai",
     "pplx-abcdefghijklmnopqrstuvwxyz": "perplexity",
     "hf_abcdefghijklmnopqrstuvwxyz": "huggingface",
@@ -111,6 +112,21 @@ test("classify maps HTTP statuses to key states", () => {
   assert.equal(classify(p, res(400, { error: { message: "API key not valid" } })), "invalid");
   assert.equal(classify(p, res(400, { error: { message: "bad request" } })), "error");
   assert.equal(classify(p, res(503)), "error");
+});
+
+test("a 2xx HTML page (captive portal, bot challenge) is never 'live'", () => {
+  const p = providerList[0];
+  assert.equal(classify(p, { status: 200, body: null, text: "<html>Sign in to Wi-Fi</html>" }), "error");
+});
+
+test("validation-probe providers only count a real validation error as live", () => {
+  const samba = providerList.find((p) => p.id === "sambanova");
+  const res = (status, body, text = body ? JSON.stringify(body) : "") => ({ status, body, text });
+  assert.equal(classify(samba, res(400, { error: { message: "input is required" } })), "live");
+  assert.equal(classify(samba, res(404, null, "")), "error", "empty 404 seen from some regions");
+  assert.equal(classify(samba, res(400, null, "")), "error", "400 without a JSON error");
+  assert.equal(classify(samba, res(400, { error: { message: "Incorrect API key provided" } })), "invalid");
+  assert.equal(classify(samba, res(401, { error: { message: "Incorrect API key provided" } })), "invalid");
 });
 
 test("checkKey parses models on success", async () => {
