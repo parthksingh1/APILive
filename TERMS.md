@@ -55,7 +55,7 @@ You are responsible for complying with all export-control and sanctions laws tha
 
 ## 10. Governing law
 
-These Terms are governed by the laws of **[JURISDICTION, e.g. India]**, without regard to conflict-of-law rules. Any dispute will be subject to the exclusive jurisdiction of the courts of **[CITY, COUNTRY]**, unless the law of your country of residence requires otherwise.
+These Terms are governed by the laws of India, without regard to conflict-of-law rules. Any dispute will be subject to the exclusive jurisdiction of the courts of Vadodara,India unless the law of your country of residence requires otherwise.
 
 ## 11. General
 
