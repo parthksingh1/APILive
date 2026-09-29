@@ -149,3 +149,21 @@ function statusEl(s) {
   return h("span", { class: "status", "data-s": s }, s === "checking" ? h("span", { class: "spinner" }) : h("span", { class: "status-dot" }), STATUS[s]);
 }
 
+// ------------------------------------------------------------------ theme
+
+function initTheme() {
+  let saved = null;
+  try {
+    saved = localStorage.getItem("apilive-theme");
+  } catch {}
+  if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+  $("themeBtn").addEventListener("click", () => {
+    const current = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const next = current === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem("apilive-theme", next);
+    } catch {}
+  });
+}
+
