@@ -292,3 +292,118 @@ function wireDocs() {
   });
 }
 
+// ------------------------------------------------------------------ add dialog
+
+const input = $("keyInput");
+const select = $("providerSelect");
+
+function detectLocal(text) {
+  const forced = select.value || null;
+  const out = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const m = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_.-]*)\s*[=:]\s*["'`]?([^"'`\s#]+)/);
+    let name = null;
+    let value = line.replace(/^Bearer\s+/i, "").replace(/^["'`]|["'`]$/g, "");
+    if (m && m[2].length >= 16) {
+      name = m[1];
+      value = m[2];
+    } else if (m && /^[A-Z][A-Z0-9]*_[A-Z0-9_]*$/.test(m[1])) {
+      continue; // NAME=placeholder
+    }
+    if (/\s/.test(value) || value.length < 8) continue;
+    let provider = forced;
+    let confident = Boolean(forced);
+    if (!provider) {
+      const byEnv = name && state.providers.find((p) => p.env.includes(name));
+      const exact = !byEnv && state.providers.find((p) => p.pattern && new RegExp(p.pattern).test(value));
+      const loose = !byEnv && !exact ? state.providers.filter((p) => p.loose && new RegExp(p.loose).test(value)) : [];
+      provider = (byEnv || exact || loose[0])?.id || null;
+      confident = Boolean(byEnv || exact);
+    }
+    out.push({ provider, confident, preview: maskPreview(value), name });
+  }
+  return out;
+}
+
+function updatePreview() {
+  const found = input.value.trim() ? detectLocal(input.value) : [];
+  const n = found.length;
+  $("addSubmit").disabled = n === 0;
+  $("addSubmit").textContent = n > 1 ? `Check ${n} keys` : "Check key";
+  const pv = $("preview");
+  if (!input.value.trim()) return pv.replaceChildren();
+  if (!n) return pv.replaceChildren(h("div", { class: "preview-empty" }, "No API keys found in this text."));
+  const shown = found.slice(0, 6);
+  pv.replaceChildren(
+    ...shown.map((f) =>
+      h(
+        "div",
+        { class: "preview-row" },
+        mark(f.provider),
+        h("span", {}, f.provider ? pName(f.provider) : h("span", { class: "muted" }, "Unknown. Choose a provider after adding")),
+        f.provider && !f.confident ? h("span", { class: "tag" }, "Guess") : null,
+        h("span", { class: "key-text" }, f.preview),
+      ),
+    ),
+    ...(n > shown.length ? [h("div", { class: "preview-more" }, `and ${n - shown.length} more`)] : []),
+  );
+}
+
+function openAdd() {
+  requireAck(() => {
+    closeSheet();
+    const dlg = $("addDialog");
+    if (!dlg.open) dlg.showModal();
+    input.focus();
+    updatePreview();
+  });
+}
+
+async function submitAdd() {
+  const text = input.value.trim();
+  if (!text) return;
+  const btn = $("addSubmit");
+  btn.disabled = true;
+  try {
+    const { added, duplicates, limited, maxKeys } = await api("POST", "/api/keys", { text, provider: select.value || null });
+    if (!added.length) {
+      toast(limited ? `Limit reached: apilive checks at most ${maxKeys} keys per session` : duplicates ? "Those keys are already in the list" : "No API keys found in that text", { error: !duplicates });
+      return;
+    }
+    $("addDialog").close();
+    input.value = "";
+    select.value = "";
+    for (const e of added.slice().reverse()) state.entries.unshift(prepare(e));
+    render();
+    runChecks(added.filter((e) => e.provider).map((e) => e.ref));
+    const notes = [duplicates && `${duplicates} already listed`, limited && `${limited} over the ${maxKeys}-key limit`].filter(Boolean);
+    toast(`Added ${plural(added.length, "key")}${notes.length ? ` · ${notes.join(", ")}` : ""}`);
+    const unknown = added.find((e) => !e.provider);
+    if (unknown) openSheet(unknown.ref);
+  } catch (e) {
+    toast(e.message, { error: true });
+  } finally {
+    btn.disabled = false;
+    updatePreview();
+  }
+}
+
+function wireAdd() {
+  const dlg = $("addDialog");
+  input.addEventListener("input", updatePreview);
+  select.addEventListener("change", updatePreview);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      submitAdd();
+    }
+  });
+  $("addSubmit").addEventListener("click", submitAdd);
+  dlg.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => dlg.close()));
+  dlg.addEventListener("click", (e) => e.target === dlg && dlg.close());
+}
+
+const prepare = (e) => ({ ...e, result: null, checking: false, checkedAt: null });
+
