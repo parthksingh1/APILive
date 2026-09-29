@@ -1,0 +1,62 @@
+{
+  "name": "apilive",
+  "version": "1.1.0",
+  "description": "Check if your LLM API keys are live — across 24 providers, without spending a single token. Local, zero-dependency CLI + web UI.",
+  "type": "module",
+  "bin": {
+    "apilive": "bin/apilive.js"
+  },
+  "main": "src/check.js",
+  "exports": {
+    ".": "./src/check.js",
+    "./providers": "./src/providers.js",
+    "./env": "./src/env.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "public",
+    "docs/GUIDE.md",
+    "CHANGELOG.md",
+    "PRIVACY.md",
+    "TERMS.md",
+    "SECURITY.md",
+    "SUPPORT.md"
+  ],
+  "scripts": {
+    "start": "node bin/apilive.js",
+    "dev": "node --watch bin/apilive.js --no-open",
+    "check": "node bin/apilive.js check",
+    "test": "node --test",
+    "verify": "node scripts/verify-endpoints.js"
+  },
+  "keywords": [
+    "api-key",
+    "api-key-checker",
+    "llm",
+    "openai",
+    "anthropic",
+    "claude",
+    "gemini",
+    "groq",
+    "deepseek",
+    "openrouter",
+    "mistral",
+    "dotenv",
+    "cli",
+    "validator"
+  ],
+  "author": "Parth Kumar Singh",
+  "license": "MIT",
+  "homepage": "https://github.com/parthksingh1/apilive#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parthksingh1/apilive.git"
+  },
+  "bugs": {
+    "url": "https://github.com/parthksingh1/apilive/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
