@@ -894,3 +894,26 @@ function download(kind) {
   toast(`Downloaded apilive-report.${kind}`);
 }
 
+// ------------------------------------------------------------------ update
+
+async function loadUpdate() {
+  try {
+    const u = await api("GET", "/api/update");
+    state.update = u;
+    if (!u.updateAvailable) return;
+    $("updateChipText").textContent = `Update: v${u.latest}`;
+    $("updateChip").hidden = false;
+    $("updateDesc").textContent = `apilive ${u.latest} is available. You have ${u.current}.`;
+    $("updateCommandText").textContent = u.command || "npx apilive@latest";
+    $("releaseNotesLink").href = u.releasesUrl;
+  } catch {}
+}
+
+function wireUpdate() {
+  const dlg = $("updateDialog");
+  $("updateChip").addEventListener("click", () => dlg.showModal());
+  $("updateCommand").addEventListener("click", () => copy($("updateCommandText").textContent, "Command copied"));
+  dlg.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => dlg.close()));
+  dlg.addEventListener("click", (e) => e.target === dlg && dlg.close());
+}
+
